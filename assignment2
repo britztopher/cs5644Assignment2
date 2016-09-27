@@ -1,0 +1,72 @@
+import sklearn
+import sklearn.tree
+import numpy as np
+import graphviz
+
+# Initiate classifier
+infoGain_clf = sklearn.tree.DecisionTreeClassifier(criterion='entropy')
+
+
+def load_data(type):
+
+    col_names = [
+        'RepubOrDemo', 'handicapped-infants', 'water-project-cost-sharing', 'adoption-of-the-budget-resolution',
+        'physician-fee-freeze', 'el-salvador-aid', 'religious-groups-in-schools', 'anti-satellite-test-ban',
+        'aid-to-nicaraguan-contras', 'mx-missile', 'immigration', 'synfuels-corporation-cutback', 'education-spending',
+        'superfund-right-to-sue', 'crime', 'duty-free-exports', 'export-administration-act-south-africa'
+    ]
+
+    my_votes_array = np.genfromtxt('house-votes-84.data', dtype=None, delimiter=',')
+
+    x_matrix1 = my_votes_array[:, 1:]
+    x_matrix2 = my_votes_array
+
+    feature_names = np.array(col_names[1:])
+
+    label_name = ['Republican', 'Democrat']
+
+    if type == 'ternary':
+        x_matrix = ternary(x_matrix1)
+        y = my_votes_array[:, :1]
+    else:
+        x_matrix = skip(x_matrix2)
+        y = x_matrix[:, :1]
+        x_matrix = x_matrix[:, 1:]
+
+    # Fit classifier
+    infoGain_clf.fit(x_matrix, y)
+
+    from StringIO import StringIO
+    ss = StringIO()
+
+    sklearn.tree.export_graphviz(infoGain_clf.tree_, feature_names=feature_names, class_names=['Republican', 'Democrat'],
+                                 label="all", out_file=ss)
+    graphviz.Source(ss.getvalue())
+
+    get_prediction(-2, x_matrix, y)
+
+
+def ternary(data):
+
+    data[data == 'y'] = 1
+    data[data == 'n'] = 0
+    data[data == '?'] = 2
+
+    return data
+
+
+def skip(data):
+
+    data[data == 'y'] = 1
+    data[data == 'n'] = 0
+
+    indices = np.where(data == '?')
+    data = np.delete(data, list(set(indices[0])), 0)
+
+    return data
+
+def get_prediction(row_num, data, y):
+    print "predicted:", infoGain_clf.predict(data[-2:, :])
+    print "truth", y[-2:]
+
+load_data('skip')
