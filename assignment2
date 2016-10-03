@@ -55,15 +55,15 @@ def process(process_type, classifier_type):
         x_train, x_test, y_train, y_test = train_test_split(x_matrix, y, test_size=0.2, random_state=0)
         scores = cross_val_score(infoGain_clf, x_train, y_train.ravel(), scoring='accuracy', cv=5)
 
-        print 'Cross Validation Score Mean on Training Set'
-        print scores.mean()
+        # print 'Cross Validation Score Mean on Training Set'
+        # print scores.mean()
 
         train_and_evaluate(infoGain_clf, x_train, x_test, y_train, y_test)
     else:
         x_train, x_test, y_train, y_test = train_test_split(x_matrix, y, test_size=0.2, random_state=0)
         scores = cross_val_score(bayes_clf, x_train, y_train.ravel(), scoring='accuracy', cv=5)
-        print 'Cross Validation Score Mean on Training Set'
-        print scores.mean()
+        # print 'Cross Validation Score Mean on Training Set'
+        # print scores.mean()
 
         train_and_evaluate(bayes_clf, x_train, x_test, y_train, y_test)
 
@@ -71,10 +71,10 @@ def process(process_type, classifier_type):
 def train_and_evaluate(clf, x_train, x_test, y_train, y_test):
     clf.fit(x_train, y_train.ravel())
 
-    print 'Accuracy in training set:'
-    print clf.score(x_train, y_train)
-    print 'Accuracy on test set:'
-    print clf.score(x_test, y_test)
+    # print 'Accuracy in training set:'
+    # print clf.score(x_train, y_train)
+    # print 'Accuracy on test set:'
+    # print clf.score(x_test, y_test)
 
     y_pred = clf.predict(x_test)
 
@@ -140,19 +140,25 @@ def replace_cols_with_y_or_n(data):
 
 print 'DECISION::TERNARY::'
 process('ternary', 'decision')
+print '---------------------------------------------------------------------'
 
 print 'DECISION::SKIP::'
 process('skip', 'decision')
+print '---------------------------------------------------------------------'
 
 print 'DECISION::REPLACE::'
 process('replace', 'decision')
+print '---------------------------------------------------------------------'
 #
 print 'NAIVE_BAYES::TERNARY::'
 process('ternary', 'naive_bayes')
+print '---------------------------------------------------------------------'
 #
 print 'NAIVE_BAYES::SKIP::'
 process('skip', 'naive_bayes')
+print '---------------------------------------------------------------------'
 
 print 'NAIVE_BAYES::REPLACE::'
 process('replace', 'naive_bayes')
+print '---------------------------------------------------------------------'
 
