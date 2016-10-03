@@ -1,16 +1,15 @@
-import sklearn
 import sklearn.tree
 import numpy as np
-import graphviz
 from StringIO import StringIO
+from sklearn.cross_validation import train_test_split
 from sklearn.naive_bayes import BernoulliNB
+from sklearn import metrics
+from sklearn.cross_validation import cross_val_score
 
 # Initiate classifier
 infoGain_clf = sklearn.tree.DecisionTreeClassifier(criterion='entropy')
 bayes_clf = BernoulliNB()
 ss = StringIO()
-
-
 
 def load_data():
 
@@ -39,24 +38,52 @@ def process(process_type, classifier_type):
         x_matrix = ternary(x_matrix1)
         x_matrix = x_matrix.astype(int)
         y = my_votes_array[:, :1]
-    else:
+    elif process_type == 'skip':
         x_matrix = skip(x_matrix2)
+        y = x_matrix[:, :1]
+        x_matrix = x_matrix[:, 1:]
+        x_matrix = x_matrix.astype(int)
+    else:
+        x_matrix = replace_cols_with_y_or_n(my_votes_array)
+        x_matrix = skip(x_matrix)
         y = x_matrix[:, :1]
         x_matrix = x_matrix[:, 1:]
         x_matrix = x_matrix.astype(int)
 
     # Fit classifier
     if classifier_type is 'decision':
-        infoGain_clf.fit(x_matrix, y)
-        sklearn.tree.export_graphviz(infoGain_clf.tree_, feature_names=feature_names,
-                                     class_names=label_name,
-                                     label="all", out_file=ss)
+        x_train, x_test, y_train, y_test = train_test_split(x_matrix, y, test_size=0.2, random_state=0)
+        scores = cross_val_score(infoGain_clf, x_train, y_train.ravel(), scoring='accuracy', cv=5)
 
-        graphviz.Source(ss.getvalue())
-        get_tree_prediction(-2, x_matrix, y)
+        print 'Cross Validation Score Mean on Training Set'
+        print scores.mean()
+
+        train_and_evaluate(infoGain_clf, x_train, x_test, y_train, y_test)
     else:
-        bayes_clf.fit(x_matrix, y.ravel())
-        get_bayes_prediction(-2, x_matrix, y)
+        x_train, x_test, y_train, y_test = train_test_split(x_matrix, y, test_size=0.2, random_state=0)
+        scores = cross_val_score(bayes_clf, x_train, y_train.ravel(), scoring='accuracy', cv=5)
+        print 'Cross Validation Score Mean on Training Set'
+        print scores.mean()
+
+        train_and_evaluate(bayes_clf, x_train, x_test, y_train, y_test)
+
+
+def train_and_evaluate(clf, x_train, x_test, y_train, y_test):
+    clf.fit(x_train, y_train.ravel())
+
+    print 'Accuracy in training set:'
+    print clf.score(x_train, y_train)
+    print 'Accuracy on test set:'
+    print clf.score(x_test, y_test)
+
+    y_pred = clf.predict(x_test)
+
+    print 'Classification Report:'
+    print metrics.classification_report(y_test, y_pred)
+
+    print 'Confusion Matrix:'
+    print metrics.confusion_matrix(y_test, y_pred)
+    print '\n'
 
 
 def ternary(data):
@@ -80,9 +107,12 @@ def skip(data):
 
 
 def get_tree_prediction(row_num, data, y):
-    print "predicted:", infoGain_clf.predict(data[row_num:, :])
+    predicted = infoGain_clf.predict(data[row_num:, :])
+    print "predicted:", predicted
     print "truth", y[row_num:]
     print '\n'
+
+    return predicted
 
 
 def get_bayes_prediction(row_num, data, y):
@@ -107,14 +137,22 @@ def replace_cols_with_y_or_n(data):
 
     return my_data
 
-# print 'DECISION::SKIP?::'
-# process('skip', 'decision')
-# print 'DECISION::TERNARY::'
-# process('ternary', 'decision')
-# print 'NAIVE_BAYES::TERNARY::'
-# process('ternary', 'naive_bayes')
-# print 'NAIVE_BAYES::SKIP::'
-# process('skip', 'naive_bayes')
 
+print 'DECISION::TERNARY::'
+process('ternary', 'decision')
 
+print 'DECISION::SKIP::'
+process('skip', 'decision')
+
+print 'DECISION::REPLACE::'
+process('replace', 'decision')
+#
+print 'NAIVE_BAYES::TERNARY::'
+process('ternary', 'naive_bayes')
+#
+print 'NAIVE_BAYES::SKIP::'
+process('skip', 'naive_bayes')
+
+print 'NAIVE_BAYES::REPLACE::'
+process('replace', 'naive_bayes')
 
